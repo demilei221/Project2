@@ -153,7 +153,7 @@ def getScore(places, address):
   result = walkscore_api.get_score(latitude = places[0]['lat'], longitude = places[0]['lng'], address = address)
 
   # the WalkScore for the location
-  return result.walk_score
+  return str(result.walk_score)
 
   # the TransitScore for the location
   # print(result.transit_score)
@@ -168,6 +168,8 @@ def get_bus_stop(places):
 
 def get_info(address, county, state, zip_code, business_type):
   places = place_search(str(address) + ", " +  str(zip_code))
+  print( getScore(places, address))
+
   return {'demographic' : demographic_county(county, state),
           'income_zip_code': income_zip_code(zip_code),
           'income_county' : income_county(county),

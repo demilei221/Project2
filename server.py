@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
+import json
 
 import main
 
@@ -18,7 +19,7 @@ def hello(check):
 
 @app.route("/<address>/<county>/<state>/<zip_code>/<business_type>")
 def info(address, county, state, zip_code, business_type):
-    print(address, county, state, zip_code, business_type)
-    return main.get_info(address, county, state, zip_code, business_type)
+    # print(main.get_info(address, county, state, zip_code, business_type))
+    return json.dumps(main.get_info(address, county, state, zip_code, business_type))
 
 app.run()
