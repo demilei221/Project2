@@ -35,17 +35,17 @@ def demographic_county(County, State):
 def income_zip_code(Zip):
   income_zip = df_income[df_income.Zip_Code == Zip]
 
-  return income_zip.Median.median()
+  return str(income_zip.Median.median())
 
 
 def income_county(county):
   income_county = df_income[df_income.County == county]
-  return income_county.Median.median()
+  return str(income_county.Median.median())
 
 
 def poverty_county(county):
   poverty_county = df_demographic[df_demographic.County == county]
-  return poverty_county.Poverty.values[0]
+  return str(poverty_county.Poverty.values[0])
 
 
 # Python program to get a set of
@@ -83,11 +83,11 @@ def place_search(query):
     place['name'] = y[i]['name']
     place['address'] = y[i]['formatted_address']
     ans.append(place)
-  return ans
+  return str(ans)
 
 
 def get_distance(coord1, coord2):
-  return geodesic(coord1, coord2).miles
+  return str(geodesic(coord1, coord2).miles)
 
 
 # coord1 = (34.0991491, -118.1099605)
@@ -132,7 +132,7 @@ def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
 
   ans = sorted(ans, key=itemgetter('distance'))
 
-  return ans
+  return str(ans)
 
 # nearby = nearby_place_search('6 W Main St,  91801','parking')
 # print(nearby, len(nearby))
@@ -164,7 +164,7 @@ def getScore(places, address):
 
 
 def get_bus_stop(places):
-  return nearby_place_search(places,'bus', keyword='stop')
+  return str(nearby_place_search(places,'bus', keyword='stop'))
 
 def get_info(address, county, state, zip_code, business_type):
   places = place_search(str(address) + ", " +  str(zip_code))
