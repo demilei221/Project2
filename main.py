@@ -17,17 +17,18 @@ california_income = df_income[df_income.State_Name == "California"]
 def demographic_county(County, State):
   demographic = df_demographic[df_demographic.State == State]
   demographic = demographic[demographic.County == County]
+  print(demographic)
 
   demo_dict = {}
-  demo_dict['total_pop'] = demographic.TotalPop.values[0]
-  demo_dict['men'] =  demographic.Men.values[0]
-  demo_dict['women'] = demographic.Women.values[0]
-  demo_dict['hispanic'] = 	demographic.Hispanic.values[0]
-  demo_dict['white']=	demographic.White.values[0]
-  demo_dict['black']=	demographic.Black.values[0]
-  demo_dict['native'] = 	demographic.Native.values[0]
-  demo_dict['asian']	= demographic.Asian.values[0]
-  demo_dict['pacific'] =	demographic.Pacific.values[0]
+  demo_dict['total_pop'] = str(demographic.TotalPop.values[0])
+  demo_dict['men'] =  str(demographic.Men.values[0])
+  demo_dict['women'] = str(demographic.Women.values[0])
+  demo_dict['hispanic'] = str(demographic.Hispanic.values[0])
+  demo_dict['white'] = str(demographic.White.values[0])
+  demo_dict['black'] = str(demographic.Black.values[0])
+  demo_dict['native'] = str(demographic.Native.values[0])
+  demo_dict['asian'] = str(demographic.Asian.values[0])
+  demo_dict['pacific'] = str(demographic.Pacific.values[0])
 
   return demo_dict
 
@@ -126,7 +127,7 @@ def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
     temp = {}
     temp['name'] = place['name']
     temp['address'] = place['vicinity']
-    temp['distance'] = get_distance(coord1, coord2)
+    temp['distance'] = str(get_distance(coord1, coord2))
 
     ans.append(temp)
 
@@ -167,11 +168,10 @@ def get_bus_stop(places):
   return str(nearby_place_search(places,'bus', keyword='stop'))
 
 def get_info(address, county, state, zip_code, business_type):
-  places = place_search(str(address) + ", " +  str(zip_code))
-  print( getScore(places, address))
+  places = place_search(address + ", " +  zip_code)
 
   return {'demographic' : demographic_county(county, state),
-          'income_zip_code': income_zip_code(zip_code),
+          'income_zip_code': income_zip_code(int(zip_code)),
           'income_county' : income_county(county),
           'poverty_county': poverty_county(county),
           'near_by_place' : nearby_place_search(places, business_type),
@@ -185,4 +185,11 @@ def get_info(address, county, state, zip_code, business_type):
 # print('nearby places:' , nearby)
 # print('score: ', main.getScore(places, address))
 
+def getCounties(state):
+  demographic = df_demographic[df_demographic.State == state]
+  return list(demographic['County'].values)
 
+def getStates():
+  states = sorted(set(df_demographic['State']))
+  states = list(states)
+  return states
