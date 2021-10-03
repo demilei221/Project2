@@ -97,6 +97,7 @@ def get_distance(coord1, coord2):
 # print(get_distance(coord1, coord2))
 
 def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
+  print(source_place)
   # print(place_type)
   # source_place = place_search(place)
   # print(source_place)
@@ -106,8 +107,7 @@ def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
   # get method of requests module
   # return response object
   # r = requests.get(url + 'location=' + str(ans[0][2]['lat']) +str(ans[0][2]['lng'])+'&radius=3200'+ place_type+'&key=' + api_key)
-  r = requests.get(url + 'location=' + str(source_place[0]['lat']) + ',' + str(
-    source_place[0]['lng']) + '&radius=' + distance + '&type=' + place_type + '&keyword=' + keyword + '&key=' + api_key)
+  r = requests.get(url + 'location=' + str(source_place[0]['lat']) + ',' + str(source_place[0]['lng']) + '&radius=' + distance + '&type=' + place_type + '&keyword=' + keyword + '&key=' + api_key)
 
   # json method of response object convert
   # json format data into python format data
@@ -169,13 +169,15 @@ def get_bus_stop(places):
 
 def get_info(address, county, state, zip_code, business_type):
   places = place_search(address + ", " +  zip_code)
-
+  print(places)
   return {'demographic' : demographic_county(county, state),
           'income_zip_code': income_zip_code(int(zip_code)),
           'income_county' : income_county(county),
           'poverty_county': poverty_county(county),
           'near_by_place' : nearby_place_search(places, business_type),
-          'walk_score' : getScore(places, address)
+          'walk_score' : getScore(places, address),
+          'latitude' : places[0]['lat'],
+          'longitude' : places[0]['lng']
           }
 
 # address = '419 W Adams Ave, alhambra'
