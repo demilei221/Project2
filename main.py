@@ -7,6 +7,8 @@ from geopy.distance import geodesic
 from operator import itemgetter
 from walkscore import WalkScoreAPI
 
+
+
 df_demographic = pd.read_csv('acs2017_county_data.csv')
 
 df_income = pd.read_csv('kaggle_income.csv',encoding = "ISO-8859-1")
@@ -84,7 +86,7 @@ def place_search(query):
     place['name'] = y[i]['name']
     place['address'] = y[i]['formatted_address']
     ans.append(place)
-  return str(ans)
+  return ans
 
 
 def get_distance(coord1, coord2):
@@ -97,7 +99,7 @@ def get_distance(coord1, coord2):
 # print(get_distance(coord1, coord2))
 
 def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
-  print(source_place)
+ 
   # print(place_type)
   # source_place = place_search(place)
   # print(source_place)
@@ -107,6 +109,7 @@ def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
   # get method of requests module
   # return response object
   # r = requests.get(url + 'location=' + str(ans[0][2]['lat']) +str(ans[0][2]['lng'])+'&radius=3200'+ place_type+'&key=' + api_key)
+  print(source_place)
   r = requests.get(url + 'location=' + str(source_place[0]['lat']) + ',' + str(source_place[0]['lng']) + '&radius=' + distance + '&type=' + place_type + '&keyword=' + keyword + '&key=' + api_key)
 
   # json method of response object convert
@@ -128,12 +131,13 @@ def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
     temp['name'] = place['name']
     temp['address'] = place['vicinity']
     temp['distance'] = str(get_distance(coord1, coord2))
-
+    temp['lat'] = place['geometry']['location']['lat']
+    temp['lng'] = place['geometry']['location']['lng']
     ans.append(temp)
 
   ans = sorted(ans, key=itemgetter('distance'))
 
-  return str(ans)
+  return ans
 
 # nearby = nearby_place_search('6 W Main St,  91801','parking')
 # print(nearby, len(nearby))
@@ -145,10 +149,23 @@ def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
 
 #source: https://pypi.org/project/walkscore-api/
 
+
+
 api_key_walkscore = 'b268b8ca8e79828b9d3d43eb99375200'
 walkscore_api = WalkScoreAPI(api_key = api_key_walkscore)
 
 def getScore(places, address):
+  # Param = {'address' : address, 'lat' : '47.6085','lon' : '-122.3295' ,'transit ': '1' , 'bike' : '1' , 'wsapikey': 'b268b8ca8e79828b9d3d43eb99375200'}
+  # r = requests.get(url="https://api.walkscore.com/score/json", params= Param)
+  #
+  # # extracting data in json format
+  # data = r.json()  # Param = {'address' : address, 'lat' : '47.6085','lon' : '-122.3295' ,'transit ': '1' , 'bike' : '1' , 'wsapikey': 'b268b8ca8e79828b9d3d43eb99375200'}
+  #   # r = requests.get(url="https://api.walkscore.com/score/json", params= Param)
+  #   #
+  #   # # extracting data in json format
+  #   # data = r.json()
+  #   # print(data)
+  # print(data)
   # address = '419 W Adams Ave, alhambra'
 
   result = walkscore_api.get_score(latitude = places[0]['lat'], longitude = places[0]['lng'], address = address)
@@ -156,11 +173,14 @@ def getScore(places, address):
   # the WalkScore for the location
   return str(result.walk_score)
 
+
   # the TransitScore for the location
   # print(result.transit_score)
 
   # the BikeScore for the location
   # print(result.bike_score)
+  # return data
+
 
 
 
@@ -175,6 +195,7 @@ def get_info(address, county, state, zip_code, business_type):
           'income_county' : income_county(county),
           'poverty_county': poverty_county(county),
           'near_by_place' : nearby_place_search(places, business_type),
+          'parkings': nearby_place_search(places, "parking"),
           'walk_score' : getScore(places, address),
           'latitude' : places[0]['lat'],
           'longitude' : places[0]['lng']
