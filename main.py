@@ -1,115 +1,103 @@
 import pandas as pd
-import os
 import requests, json
 from geopy.distance import geodesic
 from operator import itemgetter
 
+#Michael presenting this
+
 df_demographic = pd.read_csv('acs2017_county_data.csv')
-df_income = pd.read_csv('kaggle_income.csv',encoding = "ISO-8859-1")
-california_income = df_income[df_income.State_Name == "California"]
+df_demZip = pd.read_csv('ACSDP5Y2019.DP05_data_with_overlays_2021-11-04T120142.csv')
+df_incomeZip = pd.read_csv('ACSST5Y2019.S1901_data_with_overlays_2021-11-05T101234.csv')
+df_incomeCounty = pd.read_csv('ACSST1Y2019.S1901_data_with_overlays_2021-11-04T144153.csv')
+# california_income = df_incomeZip[df_incomeZip.State_Name == "California"]
 api_key_walkscore = 'b268b8ca8e79828b9d3d43eb99375200'
 api_key = 'AIzaSyABaPaAeZXhRLax3OJ9TvYhtK-QGCDuikM'
 
+def zipToZcta(zipCode):
+    df = pd.read_excel("ZiptoZcta_Crosswalk_2021.xlsx")
+    data = (df[df["ZIP_CODE"] == int(zipCode)].ZCTA).values[0]
+    return data
+
 # return: TotalPop,	Men	,Women,	Hispanic,	White	,Black,	Native,	Asian,	Pacific
-def demographic_county(County, State):
-    demographic = df_demographic[df_demographic.State == State]
-    demographic = demographic[demographic.County == County]
-    print(demographic)
+def demographic(zipCode):
+    ZCTA = zipToZcta(zipCode)
+    race_dict = {}
+    data = df_demZip[df_demZip.NAME == f'ZCTA5 {ZCTA}']
+    race_dict['asian'] = (data.DP05_0044PE).values[0]
+    race_dict['white'] = (data.DP05_0037PE).values[0]
+    race_dict['black'] = (data.DP05_0038PE).values[0]
+    race_dict['native'] = (data.DP05_0039PE).values[0]
+    race_dict['hispanic'] = (data.DP05_0071PE).values[0]
+    race_dict['pacific'] = (data.DP05_0052PE).values[0]
+    return race_dict
 
-    demo_dict = {}
-    demo_dict['total_pop'] = str(demographic.TotalPop.values[0])
-    demo_dict['men'] =  str(demographic.Men.values[0])
-    demo_dict['women'] = str(demographic.Women.values[0])
-    demo_dict['hispanic'] = str(demographic.Hispanic.values[0])
-    demo_dict['white'] = str(demographic.White.values[0])
-    demo_dict['black'] = str(demographic.Black.values[0])
-    demo_dict['native'] = str(demographic.Native.values[0])
-    demo_dict['asian'] = str(demographic.Asian.values[0])
-    demo_dict['pacific'] = str(demographic.Pacific.values[0])
 
-    return demo_dict
+print(demographic("92614"))
+
 
 
 def income_zip_code(Zip):
-    income_zip = df_income[df_income.Zip_Code == Zip]
-
-    return str(income_zip.Median.median())
+    ZCTA = zipToZcta(Zip)
+    # race_dict = {}
+    data = df_incomeZip[df_incomeZip.NAME == f'ZCTA5 {ZCTA}']
+    return str((data.S1901_C01_012E).values[0])
 
 
 def income_county(county):
-    income_county = df_income[df_income.County == county]
-    return str(income_county.Median.median())
+    data = df_incomeCounty[df_incomeCounty.NAME.apply(lambda x : f'{county}' in x)]
+    return str((data.S1901_C01_012E).values[0])
 
 
 def poverty_county(county):
     poverty_county = df_demographic[df_demographic.County == county]
     return str(poverty_county.Poverty.values[0])
 
+#using google api, search for the given place
 def place_search(query):
-    # url variable store url
     url = "https://maps.googleapis.com/maps/api/place/textsearch/json?"
-
-    # get method of requests module
-    # return response object
-    r = requests.get(url + 'query=' + query +
-                   '&key=' + api_key)
-
-    # json method of response object convert
-    # json format data into python format data
+    r = requests.get(url + 'query=' + query + '&key=' + api_key)
     x = r.json()
-
-    # now x contains list of nested dictionaries
-    # we know dictionary contain key value pair
-    # store the value of result key in variable y
     y = x['results']
-    # print(y)
-    ans = []
-    # keep looping upto length of y
+
+    temp = []
     for i in range(len(y)):
         place = y[i]['geometry']['location']
         place['name'] = y[i]['name']
         place['address'] = y[i]['formatted_address']
-        ans.append(place)
-    return ans
+        temp.append(place)
+    return temp
 
 def get_distance(coord1, coord2):
     return str(geodesic(coord1, coord2).miles)
 
+#search for place near the given place
 def nearby_place_search(source_place, place_type, distance='4828', keyword=''):
-    # url variable store url
     url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
-
-    # get method of requests module
-    # return response object
-    r = requests.get(url + 'location=' + str(source_place[0]['lat']) + ',' + str(source_place[0]['lng']) + '&radius=' + distance + '&type=' + place_type + '&keyword=' + keyword + '&key=' + api_key)
-
-    # json method of response object convert to json format data into python format data
+    r = requests.get(url + 'location=' + str(source_place[0]['lat']) + ',' +
+                     str(source_place[0]['lng']) + '&radius=' + distance + '&type=' +
+                     place_type + '&keyword=' + keyword + '&key=' + api_key)
     x = r.json()
-    # now x contains list of nested dictionaries
-    # we know dictionary contain key value pair
-    # store the value of result key in variable y
     y = x['results']
 
-    ans = []
-    # keep looping upto length of y
+    ans = [] #list of dictionaries
     for place in y:
         coord1 = (source_place[0]['lat'], source_place[0]['lng'])
         coord2 = (place['geometry']['location']['lat'], place['geometry']['location']['lng'])
-        temp = {}
+        temp = {} #temp is the current dictionary
         temp['name'] = place['name']
         temp['address'] = place['vicinity']
         temp['distance'] = str(get_distance(coord1, coord2))
         temp['lat'] = place['geometry']['location']['lat']
         temp['lng'] = place['geometry']['location']['lng']
-        ans.append(temp)
-
+        ans.append(temp) #appending temp to the list
     ans = sorted(ans, key=itemgetter('distance'))
-
     return ans
 
-def getScore(places, address):
+def getScore(places, address): #from walk score api, walk, bike, and transit
 
-    r = requests.get(url="https://api.walkscore.com/score?format=json&address="+address+"&lat="+str(places[0]['lat'])+"&lon="+str(places[0]['lng'])+"&transit=1&bike=1&wsapikey="+api_key_walkscore,)
+    r = requests.get(url="https://api.walkscore.com/score?format=json&address="+address+
+                         "&lat="+str(places[0]['lat'])+"&lon="+str(places[0]['lng'])+
+                         "&transit=1&bike=1&wsapikey="+api_key_walkscore,)
     # extracting data in json format
     data = r.json()
     keys_to_extract = ['walkscore', 'description']
@@ -137,7 +125,7 @@ def get_bus_stop(places):
 def get_info(address, county, state, zip_code, business_type):
     places = place_search(address + ", " +  zip_code)
     result = {}
-    result['demographic'] = demographic_county(county, state)
+    result['demographic'] = demographic(zip_code)
     result['income_zip_code'] = income_zip_code(int(zip_code))
     result['income_county'] = income_county(county)
     result['poverty_county'] = poverty_county(county)
@@ -149,6 +137,7 @@ def get_info(address, county, state, zip_code, business_type):
     print(result)
     return result
 
+#drop down list
 def getCounties(state):
     demographic = df_demographic[df_demographic.State == state]
     return list(demographic['County'].values)
@@ -157,3 +146,5 @@ def getStates():
     states = sorted(set(df_demographic['State']))
     states = list(states)
     return states
+
+
